@@ -1,0 +1,19 @@
+{
+    "apiVersion":"1.0.0",
+    "swaggerVersion":"1.2",
+    "apis":[
+        {
+            "path":"/reap_record",
+            "description":""
+        }
+    ],
+    "info":{
+        "title":"教学成果展示API",
+        "description":"为教学成果展示提供服务",
+        "contact":"chubbyjiang@wooyou.com.cn"
+    },
+    "username":"root",
+    "password":"root",
+    "jdbc":"jdbc:mysql://117.29.168.34:3307/reap_show_service?characterEncoding=utf8",
+    "pagerUrl":"42.62.50.218:7070"
+}
