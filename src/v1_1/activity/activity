@@ -677,11 +677,11 @@
     "rules":[
         {
             "ruleName":"additional_apply_num",
-            "wantFields":"count(mar.id) as apply_num,mar.id as member_activity_relation_id,a.id,a.title,a.intro,a.cover,a.fee,a.start_time,a.create_time,a.limit_num,a.deadline,a.corp_id,a.school_id,a.available,a.remark",
-            "tables":"activity a",
+            "wantFields":"count(mar.id) as apply_num,mar.id as member_activity_relation_id,activity.id,activity.title,activity.intro,activity.cover,activity.fee,activity.start_time,activity.create_time,activity.limit_num,activity.deadline,activity.corp_id,activity.school_id,activity.available,activity.remark",
+            "tables":"activity",
             "relationFields":"1=1",
-            "join":"left join member_activity_relation mar on mar.activity_id=a.id",
-            "groupby":"a.id"
+            "join":"left join member_activity_relation mar on mar.activity_id=activity.id",
+            "groupby":"activity.id"
         }
     ],
     "models":{
