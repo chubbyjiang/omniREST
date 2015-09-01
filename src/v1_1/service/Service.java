@@ -184,13 +184,10 @@ public class Service {
                         }
                         sql.append(innerSql);
                         if (parameters.size() != 0) {
-                            for (int i = 0; i < parameters.size(); i++) {
+                            for (String parameter : parameters) {
                                 sql.append(" and ");
-                                String s = parameters.get(i);
+                                String s = parameter;
                                 sql.append(s);
-                                if (i != (parameters.size() - 1)) {
-                                    sql.append(" and ");
-                                }
                             }
                             if (deleteFlag != null) {
                                 sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
@@ -387,17 +384,16 @@ public class Service {
                         ResultSet rs = jdbcHelper.executeResultSet(nextSql, paramsMap.values().toArray());
                         rs.last();
                         if (rs.getRow() > 0) {
-                            resultModel.setNext_page(String.format("%s/%s/%s?%s", pagerUrl, projectName, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
+                            resultModel.setNext_page(String.format("%s/v1.1/%s/%s?%s", pagerUrl, projectName, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
                         }
                         if (previewPage > 0) {
-                            resultModel.setPre_page(String.format("%s/%s/%s?%s", pagerUrl, projectName, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
+                            resultModel.setPre_page(String.format("%s/v1.1/%s/%s?%s", pagerUrl, projectName, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
                         }
-                        //处理返回的总数和总页数（根据当前的条件判断）
-                        StringBuilder countSql = new StringBuilder(sql.toString());
-                        countSql = countSql.insert(countSql.indexOf("from") - 1, ",count(*)");
-                        ResultSet countRs = jdbcHelper.executeResultSet(countSql.toString(), paramsMap.values().toArray());
-                        countRs.next();
-                        Integer total_count = countRs.getInt("count(*)");
+                        ResultSet countRs = jdbcHelper.executeResultSet(sql.toString(), paramsMap.values().toArray());
+                        Integer total_count = 0;
+                        while (countRs.next()) {
+                            total_count++;
+                        }
                         Integer total_page = total_count / pageSize;
                         resultModel.setTotal_record(total_count.toString());
                         if (total_count % pageSize > 0) {

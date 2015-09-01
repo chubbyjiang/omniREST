@@ -152,7 +152,7 @@ public class Service {
                                 String value = map.get(field.getName()).get(0);
                                 String[] values = value.split(" ");
                                 //分别处理大于、小于、模糊查询、普通查询的请求
-                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk"))) {
+                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("inner"))) {
                                     if (values[0].equals("gt")) {
                                         parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
                                         returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
@@ -322,10 +322,10 @@ public class Service {
                         //rs = stmt.executeQuery(nextSql);
                         rs.last();
                         if (rs.getRow() > 0) {
-                            resultModel.setNextPage(String.format("%s/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
+                            resultModel.setNextPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
                         }
                         if (previewPage > 0) {
-                            resultModel.setPreviewPage(String.format("%s/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
+                            resultModel.setPreviewPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
                         }
                         sql.append(" limit ").append((pageIndex - 1) * pageSize).append(",").append(pageSize);
                     }
