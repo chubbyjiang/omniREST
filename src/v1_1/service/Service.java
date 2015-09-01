@@ -150,7 +150,7 @@ public class Service {
                                 //分别处理大于、小于、模糊查询、普通查询的请求
                                 String value = map.get(key).get(0);
                                 String[] values = value.split(" ");
-                                if (values.length > 1) {
+                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
                                     if (values[0].equals("gt")) {
                                         parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
                                         returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
@@ -239,7 +239,7 @@ public class Service {
                             String tmpFilter = map.get(field.getName()).get(0);
                             String[] tmpFilters = tmpFilter.split(" ");
                             String[] tmpIn = tmpFilter.split(",");
-                            if (tmpFilters.length > 1) {
+                            if (tmpFilters.length > 1 && (tmpFilters[0].contains("gt") || tmpFilters[0].contains("lt") || tmpFilters[0].contains("lk") || tmpFilters[0].contains("or") || tmpFilters[0].contains("ct"))) {
                                 //单独处理or查询
                                 if (tmpFilters[0].equals("or")) {
                                     if (tmpFilters.length > 2) {
@@ -331,6 +331,9 @@ public class Service {
                             sql.append(" and ");
                         }
                     }
+                    if (deleteFlag != null) {
+                        sql.append(String.format(" and %s=0", deleteFlag));
+                    }
                 }
                 if (orParameters.size() != 0) {
                     sql.append(" or ");
@@ -344,7 +347,8 @@ public class Service {
                     if (deleteFlag != null) {
                         sql.append(String.format(" and %s=0", deleteFlag));
                     }
-                } else {
+                }
+                if (parameters.size() == 0 && orParameters.size() == 0) {
                     if (deleteFlag != null) {
                         sql.append(String.format(" where %s=0", deleteFlag));
                     }

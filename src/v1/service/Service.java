@@ -152,7 +152,7 @@ public class Service {
                                 String value = map.get(field.getName()).get(0);
                                 String[] values = value.split(" ");
                                 //分别处理大于、小于、模糊查询、普通查询的请求
-                                if (values.length > 1) {
+                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk"))) {
                                     if (values[0].equals("gt")) {
                                         parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
                                         returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
@@ -235,7 +235,7 @@ public class Service {
                             //分别处理大于、小于、模糊查询、普通查询的请求
                             String value = map.get(field.getName()).get(0);
                             String[] values = value.split(" ");
-                            if (values.length > 1) {
+                            if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk"))) {
                                 if (values[0].equals("gt")) {
                                     parameters.add(String.format(" %s>%s", key, values[1]));
                                     returnUrl += String.format("%s=gt+%s&", key, values[1]);
