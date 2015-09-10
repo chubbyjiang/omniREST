@@ -123,7 +123,8 @@ public class Service {
                         }
 
                         //将rule拼合成SQL语句
-                        sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
+                        //sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
+                        ServiceUtil.rule(sql,rules);
                         //判断是否有join连接
                         Boolean hasJoin = false;
                         String relationFields = rules.get("relationFields").toString();

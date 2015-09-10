@@ -75,4 +75,31 @@ public class ServiceUtil {
             returnUrl += String.format("%s=%s&", key, value);
         }
     }
+
+    public static void notor(String[] values, List<String> parameters, String returnUrl, Boolean hasInnerSql, Boolean hasWhere, StringBuilder innerSql, FieldModel field, String key, String value) {
+        if (values[0].equals("gt")) {
+            parameters.add(String.format(" %s>%s", key, values[1]));
+            returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
+        } else if (values[0].equals("lt")) {
+            parameters.add(String.format(" %s<%s", key, values[1]));
+            returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
+        } else if (values[0].equals("nq")) {
+            parameters.add(String.format(" %s<>%s", key, values[1]));
+            returnUrl += String.format("%s=nq+%s&", field.getName(), values[1]);
+        } else if (values[0].equals("lk")) {
+            parameters.add(" " + Util.getVagueSQL(key, values[1]));
+            returnUrl += String.format("%s=lk+%s&", key, values[1]);
+        } else if (values[0].equals("ct")) {
+            parameters.add(" " + key + " like '%" + values[1] + "%'");
+            returnUrl += String.format("%s=ct+%s&", key, values[1]);
+        } else if (values[0].equals("inner")) {
+            if (hasInnerSql) {
+                if (!hasWhere) {
+                    innerSql.append(" where ");
+                    hasWhere = true;
+                }
+                innerSql.append(String.format(" %s=%s", key, values[1]));
+            }
+        }
+    }
 }
