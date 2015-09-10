@@ -499,9 +499,8 @@
         {
             "ruleName":"andLable",
             "wantFields":"en_file.*",
-            "tables":"en_file",
-            "join":"left join en_lable on en_file.lable=en_lable.lable_id",
-            "relationFields":"1=1"
+            "tables":"en_file,en_lable",
+            "relationFields":"en_file.lable = en_lable.lable_id"
         },
         {
             "ruleName":"getFilefInfobyId",
