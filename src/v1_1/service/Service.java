@@ -124,10 +124,13 @@ public class Service {
 
                         //将rule拼合成SQL语句
                         //sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
-                        ServiceUtil.rule(sql,rules);
+                        ServiceModel serviceModel = new ServiceModel();
+                        serviceModel.setSql(sql);
+                        serviceModel.setRules(rules);
+                        serviceModel = ServiceUtil.rule(serviceModel);
                         //判断是否有join连接
-                        Boolean hasJoin = false;
-                        String relationFields = rules.get("relationFields").toString();
+                        //Boolean hasJoin = false;
+                        /*String relationFields = rules.get("relationFields").toString();
                         for (String param : map.keySet()) {
                             if (relationFields.contains("$" + param)) {
                                 relationFields = relationFields.replace("$" + param, map.get(param).get(0));
@@ -138,9 +141,12 @@ public class Service {
                             sql.append(" ").append(rules.get("join")).append(" where ").append(relationFields);
                         } else {
                             sql.append(" where ").append(relationFields);
-                        }
+                        }*/
+                        serviceModel.setMap(map);
+                        serviceModel.setHasJoin(false);
+                        serviceModel = ServiceUtil.join(serviceModel);
                         //判断是否有内嵌的sql语句存在
-                        StringBuilder innerSql = new StringBuilder();
+                        /*StringBuilder innerSql = new StringBuilder();
                         Boolean hasInnerSql = false;
                         Boolean hasWhere = false;
                         //拼接内嵌的sql
@@ -148,7 +154,13 @@ public class Service {
                             hasInnerSql = true;
                             innerSql.append(" in ").append("(").append(rules.get("inner"));
                         }
-                        returnUrl += "rules=" + ruleName + "&";
+                        returnUrl += "rules=" + ruleName + "&";*/
+                        serviceModel.setInnerSql(new StringBuilder());
+                        serviceModel.setHasInnerSql(false);
+                        serviceModel.setHasWhere(false);
+                        serviceModel.setReturnUrl(returnUrl);
+                        serviceModel.setRuleName(ruleName);
+                        serviceModel = ServiceUtil.inner(serviceModel);
                         //对其他表的字段过滤进行处理
                         for (String field : map.keySet()) {
                             if (field.contains(".")) {
@@ -167,7 +179,7 @@ public class Service {
                                     if (values.length > 1 && (values[0].contains("nq") || values[0].contains("or") || values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
                                         //单独处理or查询
                                         if (values[0].equals("or")) {
-                                            if (values.length > 2) {
+                                            /*if (values.length > 2) {
                                                 if (values[1].equals("gt")) {
                                                     orParameters.add(String.format(" %s>%s", key, values[2]));
                                                     returnUrl += String.format("%s=gt+%s&", field.getName(), values[2]);
@@ -195,11 +207,17 @@ public class Service {
                                             } else {
                                                 orParameters.add(String.format(" %s=%s", key, values[1]));
                                                 returnUrl += String.format("%s=%s&", key, value);
-                                            }
-
+                                            }*/
+                                            serviceModel.setValues(values);
+                                            serviceModel.setOrParameters(orParameters);
+                                            serviceModel.setReturnUrl(returnUrl);
+                                            serviceModel.setField(field);
+                                            serviceModel.setKey(key);
+                                            serviceModel.setValue(value);
+                                            serviceModel = ServiceUtil.or(serviceModel);
                                         }
                                         //非or查询的处理方式
-                                        else if (values[0].equals("gt")) {
+                                        else /*if (values[0].equals("gt")) {
                                             parameters.add(String.format(" %s>%s", key, values[1]));
                                             returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
                                         } else if (values[0].equals("lt")) {
@@ -222,6 +240,14 @@ public class Service {
                                                 }
                                                 innerSql.append(String.format(" %s=%s", key, values[1]));
                                             }
+                                        }*/{
+                                            serviceModel.setValues(values);
+                                            serviceModel.setOrParameters(orParameters);
+                                            serviceModel.setReturnUrl(returnUrl);
+                                            serviceModel.setField(field);
+                                            serviceModel.setKey(key);
+                                            serviceModel.setValue(value);
+                                            serviceModel = ServiceUtil.notor(serviceModel);
                                         }
                                     } else {
                                         parameters.add(String.format(" %s=%s", key, value));
@@ -233,7 +259,7 @@ public class Service {
                                     //分别处理大于、小于、模糊查询、普通查询的请求
                                     String value = map.get(key).get(0);
                                     String[] values = value.split(" ");
-                                    if (values.length > 1 && (values[0].contains("nq") ||values[0].contains("or") || values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
+                                    if (values.length > 1 && (values[0].contains("nq") || values[0].contains("or") || values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
                                         //单独处理or查询
                                         if (values[0].equals("or")) {
                                             if (values.length > 2) {
@@ -373,7 +399,7 @@ public class Service {
                             String tmpFilter = map.get(field.getName()).get(0);
                             String[] tmpFilters = tmpFilter.split(" ");
                             String[] tmpIn = tmpFilter.split(",");
-                            if (tmpFilters.length > 1 && (tmpFilters[0].contains("nq") ||tmpFilters[0].contains("gt") || tmpFilters[0].contains("lt") || tmpFilters[0].contains("lk") || tmpFilters[0].contains("or") || tmpFilters[0].contains("ct"))) {
+                            if (tmpFilters.length > 1 && (tmpFilters[0].contains("nq") || tmpFilters[0].contains("gt") || tmpFilters[0].contains("lt") || tmpFilters[0].contains("lk") || tmpFilters[0].contains("or") || tmpFilters[0].contains("ct"))) {
                                 //单独处理or查询
                                 if (tmpFilters[0].equals("or")) {
                                     if (tmpFilters.length > 2) {
