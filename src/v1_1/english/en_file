@@ -505,7 +505,7 @@
         },
         {
             "ruleName":"getFilefInfobyId",
-            "wantFields":"en_file.*,en_lable.la_name as lable_name",
+            "wantFields":"en_file.*,en_lable.name as lable_name",
             "tables":"en_file",
             "join":"left join en_lable on en_file.lable = en_lable.lable_id",
             "relationFields":"1=1"
