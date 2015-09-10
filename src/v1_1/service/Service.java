@@ -50,8 +50,6 @@ public class Service {
 
     //数据库访问总控
     JDBCHelper jdbcHelper;
-    //test
-
 
     /*
             * 根据条件查询记录集合
