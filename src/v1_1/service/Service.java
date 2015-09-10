@@ -115,6 +115,7 @@ public class Service {
                         statusCode = StatusCode.FAILD;
                     } else {
                         List<String> parameters = new ArrayList<String>();
+                        List<String> orParameters = new ArrayList<String>();
                         //获得配置文件中（POST部分）的字段信息（对应数据库中的所有字段，不包含主键和删除标志位）
                         ArrayList<FieldModel> fields = Util.getfields(tableMap);
                         fields.add(new FieldModel(pk, "", true));
@@ -126,11 +127,17 @@ public class Service {
                         sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
                         //判断是否有join连接
                         Boolean hasJoin = false;
+                        String relationFields = rules.get("relationFields").toString();
+                        for (String param : map.keySet()) {
+                            if (relationFields.contains("$" + param)) {
+                                relationFields = relationFields.replace("$" + param, map.get(param).get(0));
+                            }
+                        }
                         if (rules.get("join") != null) {
                             hasJoin = true;
-                            sql.append(" ").append(rules.get("join")).append(" where ").append(rules.get("relationFields"));
+                            sql.append(" ").append(rules.get("join")).append(" where ").append(relationFields);
                         } else {
-                            sql.append(" where ").append(rules.get("relationFields"));
+                            sql.append(" where ").append(relationFields);
                         }
                         //判断是否有内嵌的sql语句存在
                         StringBuilder innerSql = new StringBuilder();
@@ -142,40 +149,153 @@ public class Service {
                             innerSql.append(" in ").append("(").append(rules.get("inner"));
                         }
                         returnUrl += "rules=" + ruleName + "&";
-
+                        //对其他表的字段过滤进行处理
+                        for (String field : map.keySet()) {
+                            if (field.contains(".")) {
+                                fields.add(new FieldModel(field, "", true));
+                            }
+                        }
                         //如果请求的参数包含在fields中才进行处理
                         for (FieldModel field : fields) {
                             if (map.containsKey(field.getName())) {
                                 String key = field.getName();
-                                //分别处理大于、小于、模糊查询、普通查询的请求
-                                String value = map.get(key).get(0);
-                                String[] values = value.split(" ");
-                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
-                                    if (values[0].equals("gt")) {
-                                        parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
-                                        returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
-                                    } else if (values[0].equals("lt")) {
-                                        parameters.add(String.format(" %s.%s<%s", tableName, key, values[1]));
-                                        returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
-                                    } else if (values[0].equals("lk")) {
-                                        //parameters.add(" " + tableName + "." + key + " like '%" + values[1] + "%'");
-                                        parameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[1]));
-                                        returnUrl += String.format("%s=lk+%s&", key, values[1]);
-                                    } else if (values[0].equals("ct")) {
-                                        parameters.add(" " + tableName + "." + key + " like '%" + values[1] + "%'");
-                                        returnUrl += String.format("%s=ct+%s&", key, values[1]);
-                                    } else if (values[0].equals("inner")) {
-                                        if (hasInnerSql) {
-                                            if (!hasWhere) {
-                                                innerSql.append(" where ");
-                                                hasWhere = true;
+                                //判断处理的是为非本表字段
+                                if (key.contains(".")) {
+                                    //分别处理大于、小于、模糊查询、普通查询的请求
+                                    String value = map.get(key).get(0);
+                                    String[] values = value.split(" ");
+                                    if (values.length > 1 && (values[0].contains("nq") || values[0].contains("or") || values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
+                                        //单独处理or查询
+                                        if (values[0].equals("or")) {
+                                            if (values.length > 2) {
+                                                if (values[1].equals("gt")) {
+                                                    orParameters.add(String.format(" %s>%s", key, values[2]));
+                                                    returnUrl += String.format("%s=gt+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("lt")) {
+                                                    orParameters.add(String.format(" %s<%s", key, values[2]));
+                                                    returnUrl += String.format("%s=lt+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("nq")) {
+                                                    orParameters.add(String.format(" %s<>%s", key, values[2]));
+                                                    returnUrl += String.format("%s=nq+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("lk")) {
+                                                    orParameters.add(" " + Util.getVagueSQL(key, values[2]));
+                                                    returnUrl += String.format("%s=lk+%s&", key, values[1]);
+                                                } else if (values[1].equals("ct")) {
+                                                    orParameters.add(" " + key + " like '%" + values[2] + "%'");
+                                                    returnUrl += String.format("%s=ct+%s&", key, values[2]);
+                                                } else if (values[1].equals("inner")) {
+                                                    if (hasInnerSql) {
+                                                        if (!hasWhere) {
+                                                            innerSql.append(" where ");
+                                                            hasWhere = true;
+                                                        }
+                                                        innerSql.append(String.format(" %s=%s", key, values[1]));
+                                                    }
+                                                }
+                                            } else {
+                                                orParameters.add(String.format(" %s=%s", key, values[1]));
+                                                returnUrl += String.format("%s=%s&", key, value);
                                             }
-                                            innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
+
                                         }
+                                        //非or查询的处理方式
+                                        else if (values[0].equals("gt")) {
+                                            parameters.add(String.format(" %s>%s", key, values[1]));
+                                            returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("lt")) {
+                                            parameters.add(String.format(" %s<%s", key, values[1]));
+                                            returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("nq")) {
+                                            parameters.add(String.format(" %s<>%s", key, values[1]));
+                                            returnUrl += String.format("%s=nq+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("lk")) {
+                                            parameters.add(" " + Util.getVagueSQL(key, values[1]));
+                                            returnUrl += String.format("%s=lk+%s&", key, values[1]);
+                                        } else if (values[0].equals("ct")) {
+                                            parameters.add(" " + key + " like '%" + values[1] + "%'");
+                                            returnUrl += String.format("%s=ct+%s&", key, values[1]);
+                                        } else if (values[0].equals("inner")) {
+                                            if (hasInnerSql) {
+                                                if (!hasWhere) {
+                                                    innerSql.append(" where ");
+                                                    hasWhere = true;
+                                                }
+                                                innerSql.append(String.format(" %s=%s", key, values[1]));
+                                            }
+                                        }
+                                    } else {
+                                        parameters.add(String.format(" %s=%s", key, value));
+                                        returnUrl += String.format("%s=%s&", key, value);
                                     }
-                                } else {
-                                    parameters.add(String.format(" %s.%s=%s", tableName, key, value));
-                                    returnUrl += String.format("%s=%s&", key, value);
+                                }
+                                //字段为本表
+                                else {
+                                    //分别处理大于、小于、模糊查询、普通查询的请求
+                                    String value = map.get(key).get(0);
+                                    String[] values = value.split(" ");
+                                    if (values.length > 1 && (values[0].contains("nq") ||values[0].contains("or") || values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
+                                        //单独处理or查询
+                                        if (values[0].equals("or")) {
+                                            if (values.length > 2) {
+                                                if (values[1].equals("gt")) {
+                                                    orParameters.add(String.format(" %s.%s>%s", tableName, key, values[2]));
+                                                    returnUrl += String.format("%s=gt+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("lt")) {
+                                                    orParameters.add(String.format(" %s.%s<%s", tableName, key, values[2]));
+                                                    returnUrl += String.format("%s=lt+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("nq")) {
+                                                    orParameters.add(String.format(" %s.%s<>%s", tableName, key, values[2]));
+                                                    returnUrl += String.format("%s=nq+%s&", field.getName(), values[2]);
+                                                } else if (values[1].equals("lk")) {
+                                                    orParameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[2]));
+                                                    returnUrl += String.format("%s=lk+%s&", key, values[2]);
+                                                } else if (values[1].equals("ct")) {
+                                                    orParameters.add(" " + tableName + "." + key + " like '%" + values[2] + "%'");
+                                                    returnUrl += String.format("%s=ct+%s&", key, values[2]);
+                                                } else if (values[1].equals("inner")) {
+                                                    if (hasInnerSql) {
+                                                        if (!hasWhere) {
+                                                            innerSql.append(" where ");
+                                                            hasWhere = true;
+                                                        }
+                                                        innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
+                                                    }
+                                                }
+                                            } else {
+                                                orParameters.add(String.format(" %s.%s=%s", tableName, key, values[1]));
+                                                returnUrl += String.format("%s=%s&", key, value);
+                                            }
+
+                                        }
+                                        //非or查询的处理方式
+                                        else if (values[0].equals("gt")) {
+                                            parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
+                                            returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("lt")) {
+                                            parameters.add(String.format(" %s.%s<%s", tableName, key, values[1]));
+                                            returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("nq")) {
+                                            parameters.add(String.format(" %s.%s<>%s", tableName, key, values[1]));
+                                            returnUrl += String.format("%s=nq+%s&", field.getName(), values[1]);
+                                        } else if (values[0].equals("lk")) {
+                                            parameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[1]));
+                                            returnUrl += String.format("%s=lk+%s&", key, values[1]);
+                                        } else if (values[0].equals("ct")) {
+                                            parameters.add(" " + tableName + "." + key + " like '%" + values[1] + "%'");
+                                            returnUrl += String.format("%s=ct+%s&", key, values[1]);
+                                        } else if (values[0].equals("inner")) {
+                                            if (hasInnerSql) {
+                                                if (!hasWhere) {
+                                                    innerSql.append(" where ");
+                                                    hasWhere = true;
+                                                }
+                                                innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
+                                            }
+                                        }
+                                    } else {
+                                        parameters.add(String.format(" %s.%s=%s", tableName, key, value));
+                                        returnUrl += String.format("%s=%s&", key, value);
+                                    }
                                 }
                             }
                         }
@@ -192,11 +312,27 @@ public class Service {
                             if (deleteFlag != null) {
                                 sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
                             }
-                        } else {
+                        }
+
+                        if (orParameters.size() != 0) {
+                            sql.append(" or ");
+                            for (int i = 0; i < orParameters.size(); i++) {
+                                String s = orParameters.get(i);
+                                sql.append(s);
+                                if (i != (orParameters.size() - 1)) {
+                                    sql.append(" or ");
+                                }
+                            }
                             if (deleteFlag != null) {
                                 sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
                             }
                         }
+                        if (parameters.size() == 0 && orParameters.size() == 0) {
+                            if (deleteFlag != null) {
+                                sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
+                            }
+                        }
+
                         //如果有join和groupby则拼接到末尾
                         if (hasJoin) {
                             if (rules.get("groupby") != null) {
@@ -206,6 +342,7 @@ public class Service {
                     }
                 } catch (Exception ex) {
                     msg = "配置文件读取错误:" + ex.getMessage();
+                    ex.printStackTrace();
                     isCollect = false;
                     statusCode = StatusCode.FAILD;
                 }
@@ -236,7 +373,7 @@ public class Service {
                             String tmpFilter = map.get(field.getName()).get(0);
                             String[] tmpFilters = tmpFilter.split(" ");
                             String[] tmpIn = tmpFilter.split(",");
-                            if (tmpFilters.length > 1 && (tmpFilters[0].contains("gt") || tmpFilters[0].contains("lt") || tmpFilters[0].contains("lk") || tmpFilters[0].contains("or") || tmpFilters[0].contains("ct"))) {
+                            if (tmpFilters.length > 1 && (tmpFilters[0].contains("nq") ||tmpFilters[0].contains("gt") || tmpFilters[0].contains("lt") || tmpFilters[0].contains("lk") || tmpFilters[0].contains("or") || tmpFilters[0].contains("ct"))) {
                                 //单独处理or查询
                                 if (tmpFilters[0].equals("or")) {
                                     if (tmpFilters.length > 2) {
@@ -250,6 +387,11 @@ public class Service {
                                             index++;
                                             paramsMap.put(index, tmpFilters[2]);
                                             returnUrl += String.format("%s=lt+%s&", key, tmpFilters[2]);
+                                        } else if (tmpFilters[1].equals("nq")) {
+                                            orParameters.add(String.format("%s<>%s", key, tmpFilters[2]));
+                                            index++;
+                                            paramsMap.put(index, tmpFilters[2]);
+                                            returnUrl += String.format("%s=nq+%s&", field.getName(), tmpFilters[2]);
                                         } else if (tmpFilters[1].equals("lk")) {
                                             //parameters.add(" " + key + " like '%" + tmpFilters[1] + "%'");
                                             orParameters.add(" " + Util.getVagueSQL(key, tmpFilters[2]));
@@ -271,7 +413,7 @@ public class Service {
                                     } else {
                                         orParameters.add(String.format(" %s=?", key));
                                         index++;
-                                        paramsMap.put(index, tmpFilter);
+                                        paramsMap.put(index, tmpFilters[1]);
                                         returnUrl += String.format("%s=%s&", key, tmpFilter);
                                     }
 
@@ -287,6 +429,11 @@ public class Service {
                                     index++;
                                     paramsMap.put(index, tmpFilters[1]);
                                     returnUrl += String.format("%s=lt+%s&", key, tmpFilters[1]);
+                                } else if (tmpFilters[0].equals("nq")) {
+                                    parameters.add(String.format("%s<>%s", key, tmpFilters[1]));
+                                    index++;
+                                    paramsMap.put(index, tmpFilters[1]);
+                                    returnUrl += String.format("%s=nq+%s&", field.getName(), tmpFilters[1]);
                                 } else if (tmpFilters[0].equals("lk")) {
                                     //parameters.add(" " + key + " like '%" + tmpFilters[1] + "%'");
                                     parameters.add(" " + Util.getVagueSQL(key, tmpFilters[1]));
@@ -475,6 +622,8 @@ public class Service {
         Boolean isCollect = true;
         //拼接sql
         StringBuilder sql = new StringBuilder();
+        ArrayList<FieldModel> fields = Util.getfields(tableMap);
+        List<String> parameters = new ArrayList<String>();
 
         //------------------------查读库信息---------------------------
         sql.append("select result from tb_cache where requestUrl=? and requestTable=? and requestParams=? and requestMethod=?");
@@ -507,8 +656,88 @@ public class Service {
                         statusCode = StatusCode.FAILD;
                     } else {
                         //将rule拼合成SQL语句
-                        sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables")).append(" where ").append(rules.get("relationFields"));
-                        sql.append(String.format(" and %s=?", pk));
+                        //sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables")).append(" where ").append(rules.get("relationFields"));
+                        //将rule拼合成SQL语句
+                        sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
+                        //判断是否有join连接
+                        Boolean hasJoin = false;
+                        String relationFields = rules.get("relationFields").toString();
+                        for (String param : map.keySet()) {
+                            if (relationFields.contains("$" + param)) {
+                                relationFields = relationFields.replace("$" + param, map.get(param).get(0));
+                            }
+                        }
+                        if (rules.get("join") != null) {
+                            hasJoin = true;
+                            sql.append(" ").append(rules.get("join")).append(" where ").append(relationFields);
+                        } else {
+                            sql.append(" where ").append(relationFields);
+                        }
+                        //判断是否有内嵌的sql语句存在
+                        StringBuilder innerSql = new StringBuilder();
+                        Boolean hasInnerSql = false;
+                        Boolean hasWhere = false;
+                        //拼接内嵌的sql
+                        if (rules.get("inner") != null) {
+                            hasInnerSql = true;
+                            innerSql.append(" in ").append("(").append(rules.get("inner"));
+                        }
+
+                        //如果请求的参数包含在fields中才进行处理
+                        for (FieldModel field : fields) {
+                            if (map.containsKey(field.getName())) {
+                                String key = field.getName();
+                                //分别处理大于、小于、模糊查询、普通查询的请求
+                                String value = map.get(key).get(0);
+                                String[] values = value.split(" ");
+                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("ct") || values[0].contains("inner"))) {
+                                    if (values[0].equals("gt")) {
+                                        parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
+                                    } else if (values[0].equals("lt")) {
+                                        parameters.add(String.format(" %s.%s<%s", tableName, key, values[1]));
+                                    } else if (values[0].equals("lk")) {
+                                        parameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[1]));
+                                    } else if (values[0].equals("ct")) {
+                                        parameters.add(" " + tableName + "." + key + " like '%" + values[1] + "%'");
+                                    } else if (values[0].equals("inner")) {
+                                        if (hasInnerSql) {
+                                            if (!hasWhere) {
+                                                innerSql.append(" where ");
+                                                hasWhere = true;
+                                            }
+                                            innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
+                                        }
+                                    }
+                                } else {
+                                    parameters.add(String.format(" %s.%s=%s", tableName, key, value));
+                                }
+                            }
+                        }
+                        if (hasInnerSql) {
+                            innerSql.append(")");
+                        }
+                        sql.append(innerSql);
+                        if (parameters.size() != 0) {
+                            for (String parameter : parameters) {
+                                sql.append(" and ");
+                                String s = parameter;
+                                sql.append(s);
+                            }
+                            if (deleteFlag != null) {
+                                sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
+                            }
+                        } else {
+                            if (deleteFlag != null) {
+                                sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
+                            }
+                        }
+                        sql.append(String.format(" and %s.%s=?", tableName, pk));
+                        //如果有join和groupby则拼接到末尾
+                        if (hasJoin) {
+                            if (rules.get("groupby") != null) {
+                                sql.append(" group by ").append(rules.get("groupby"));
+                            }
+                        }
                     }
                 } catch (Exception ex) {
                     isCollect = false;
@@ -693,6 +922,8 @@ public class Service {
             kafkaSql = String.format("insert into %s(%s) values(%s);", tableName, fields, kafkaValueTmp);
             int res = 0;
             try {
+                //System.out.println("sql:" + sql);
+                //System.out.println("tmpMap:" + tmpMap.values());
                 res = jdbcHelper.executeUpdate(sql, tmpMap.values().toArray());
                 if (res < 1) {
                     statusCode = StatusCode.FAILD;
