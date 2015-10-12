@@ -3,14 +3,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
-    <!--<filter>
-        <filter-name>htmlFilter</filter-name>
-        <filter-class>MyFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>htmlFilter</filter-name>
-        <url-pattern>/docs/*</url-pattern>
-    </filter-mapping>-->
     <servlet-mapping>
         <servlet-name>default</servlet-name>
         <url-pattern>/doc/static/*</url-pattern>
@@ -27,15 +19,4 @@
         <servlet-name>Jersey REST Service</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
-    <!--<servlet>
-        <servlet-name>Jersey REST ServiceV1.1</servlet-name>
-        <servlet-class>
-            com.sun.jersey.spi.container.servlet.ServletContainer
-        </servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Jersey REST ServiceV1.1</servlet-name>
-        <url-pattern>/v1.1/*</url-pattern>
-    </servlet-mapping>-->
 </web-app>

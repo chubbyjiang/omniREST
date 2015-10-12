@@ -107,7 +107,7 @@
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
-                            "required":true,
+                            "required":false,
                             "minimum":0,
                             "maximum":0
                         },
@@ -156,6 +156,18 @@
                             "format":"",
                             "allowMultiple":false,
                             "required":false,
+                            "minimum":0,
+                            "maximum":0
+                         },
+            {
+                            "paramType":"query",
+                            "name":"account_id",
+                            "description":"account_id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":true,
                             "minimum":0,
                             "maximum":0
                          }
@@ -380,7 +392,19 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
-                        }
+                        },
+            {
+                            "paramType":"query",
+                            "name":"account_id",
+                            "description":"account_id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
+                         }
                     ],
                     "responseMessages":[
                         {
@@ -464,18 +488,6 @@
                             "name":"orderby",
                             "description":"orderby",
                             "dataType":"string",
-                            "type":"",
-                            "format":"",
-                            "allowMultiple":false,
-                            "required":false,
-                            "minimum":0,
-                            "maximum":0
-                        },
-            {
-                            "paramType":"query",
-                            "name":"isdesc",
-                            "description":"isdesc",
-                            "dataType":"int",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
@@ -638,7 +650,19 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
-                        }
+                        },
+            {
+                            "paramType":"query",
+                            "name":"account_id",
+                            "description":"account_id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
+                         }
                     ],
                     "responseMessages":[
                         {
@@ -659,6 +683,7 @@
                     "httpMethod":"GET",
                     "nickname":"根据userid获得对应address的cityid",
                     "type":"",
+                    "ruleName":"user_cityId",
                     "summary":"根据userid获得对应address的cityid",
                     "parameters":[
                         {

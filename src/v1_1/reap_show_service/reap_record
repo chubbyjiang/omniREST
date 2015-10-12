@@ -1,5 +1,6 @@
 {
     "pk":"id",
+    "isDefault":false,
     "apiVersion":"1.0.0",
     "swaggerVersion":"1.2",
     "basePath":"/v1.1/reap_show_service",
@@ -15,18 +16,6 @@
                     "type":"",
                     "summary":"添加reap_record",
                     "parameters":[
-                        {
-                            "paramType":"query",
-                            "name":"id",
-                            "description":"id",
-                            "dataType":"string",
-                            "type":"",
-                            "format":"",
-                            "allowMultiple":false,
-                            "required":true,
-                            "minimum":0,
-                            "maximum":0
-                        },
                         {
                             "paramType":"query",
                             "name":"schedule_detail_id",
@@ -202,7 +191,7 @@
                     "summary":"修改reap_record",
                     "parameters":[
                         {
-                            "paramType":"query",
+                            "paramType":"path",
                             "name":"id",
                             "description":"id",
                             "dataType":"string",
@@ -416,18 +405,6 @@
                             "name":"ruleName",
                             "description":"ruleName",
                             "dataType":"int",
-                            "type":"",
-                            "format":"",
-                            "allowMultiple":false,
-                            "required":false,
-                            "minimum":0,
-                            "maximum":0
-                        },
-                        {
-                            "paramType":"query",
-                            "name":"id",
-                            "description":"id",
-                            "dataType":"string",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,

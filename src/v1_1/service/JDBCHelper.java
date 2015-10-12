@@ -34,6 +34,9 @@ public class JDBCHelper {
     public ResultSet executeResultSet(String sql, Object[] params) {
         try {
             // 创建一个JDBC声明
+            /*stmt = con.prepareStatement(sql,ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            stmt.setFetchDirection(ResultSet.FETCH_REVERSE);*/
             stmt = con.prepareStatement(sql);
             if (null != params && params.length != 0) {
                 for (int i = 0; i < params.length; i++) {
@@ -51,7 +54,6 @@ public class JDBCHelper {
         try {
             // 创建一个JDBC声明
             stmt = con.prepareStatement(sql);
-            System.out.println(params.length);
             if (params.length != 0) {
                 for (int i = 0; i < params.length; i++) {
                     String pp = params[i].toString();

@@ -1,0 +1,17 @@
+{
+    "apiVersion":"1.0.0",
+    "swaggerVersion":"1.2",
+    "apis":[
+        {
+            "path":"/tb_album",
+            "description":""
+        },{
+            "path":"/tb_audio",
+            "description":""
+        }
+    ],
+    "username":"root",
+    "password":"root",
+    "jdbc":"jdbc:mysql://117.29.168.34:3307/album?characterEncoding=utf8",
+    "pagerUrl":"42.62.50.218:7070"
+}

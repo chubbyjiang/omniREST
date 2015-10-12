@@ -1,5 +1,6 @@
 {
     "pk":"id",
+    "isDefault":false,
     "apiVersion":"1.0.0",
     "swaggerVersion":"1.2",
     "basePath":"/v1.1/activity",
@@ -99,7 +100,7 @@
             ]
         },
         {
-            "path":"/member_activity_relation/{id:int}",
+            "path":"/member_activity_relation/{id:string}",
             "description":"",
             "operations":[
                 {
@@ -112,7 +113,7 @@
                             "paramType":"path",
                             "name":"id",
                             "description":"member_activity_relation的主键值",
-                            "dataType":"int",
+                            "dataType":"string",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
@@ -144,7 +145,7 @@
             ]
         },
         {
-            "path":"/member_activity_relation/{id:int}",
+            "path":"/member_activity_relation/{id:string}",
             "description":"",
             "operations":[
                 {
@@ -157,7 +158,7 @@
                             "paramType":"path",
                             "name":"id",
                             "description":"member_activity_relation的主键值",
-                            "dataType":"int",
+                            "dataType":"string",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
@@ -249,7 +250,7 @@
             ]
         },
         {
-            "path":"/member_activity_relation/{id:int}",
+            "path":"/member_activity_relation/{id:string}",
             "description":"",
             "operations":[
                 {
@@ -262,7 +263,7 @@
                             "paramType":"path",
                             "name":"id",
                             "description":"id",
-                            "dataType":"int",
+                            "dataType":"string",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
@@ -432,6 +433,15 @@
                     ]
                 }
             ]
+        }
+    ],
+    "rules":[
+        {
+            "ruleName":"full_apply_list",
+            "wantFields":"a.*,member_activity_relation.id as apply_id,member_activity_relation.member_id,member_activity_relation.name,member_activity_relation.phone",
+            "tables":"member_activity_relation",
+            "relationFields":"1=1",
+            "join":"left join activity a on a.id = member_activity_relation.activity_id"
         }
     ],
     "models":{

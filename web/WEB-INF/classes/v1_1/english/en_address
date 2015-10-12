@@ -356,7 +356,7 @@
             "ruleName":"address_detail",
             "wantFields":"en_address_province.province_name,en_address_city.city_name,en_address_area.area_name,en_address.detail_address",
             "tables":"en_address_province,en_address_city,en_address_area,en_address",
-            "relationFields":"en_address.province_id=en_address_province.province_id and en_address.city_id=en_address_city.city_id and en_address.area_id=en_address_area.area_id"
+            "relationFields":"en_address.province_id=en_address_province.province_id and en_address.city_id=en_address_city.city_id and en_address.area_id=en_address_area.area_id and en_address_province.isdelete=0 and en_address_city.isdelete=0 and en_address_area.isdelete=0"
         }
     ],
     "models":{

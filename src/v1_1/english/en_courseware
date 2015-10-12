@@ -473,7 +473,7 @@
             "wantFields":"en_courseware.*,count(ecn.id) as childCount",
             "tables":"en_courseware",
             "join":"left join en_courseware ecn on ecn.iteration_id=en_courseware.id left join en_jurisdiction on en_courseware.id = en_jurisdiction.id",
-            "relationFields":"(en_jurisdiction.authorize_level=2 or en_jurisdiction.grant_id=$en_jurisdiction.grant_id)",
+            "relationFields":"en_jurisdiction.isdelete=0 and (en_jurisdiction.authorize_level=2 or en_jurisdiction.grant_id=$en_jurisdiction.grant_id)",
             "groupby":"en_courseware.id"
         },
         {
@@ -481,7 +481,7 @@
             "wantFields":"en_courseware.*,count(ecn.id) as childCount",
             "tables":"en_courseware",
             "join":"left join en_courseware ecn on ecn.iteration_id=en_courseware.id left join en_jurisdiction on en_courseware.id = en_jurisdiction.id",
-            "relationFields":"en_jurisdiction.grant_id = 1",
+            "relationFields":"en_jurisdiction.isdelete=0 and 1=1",
             "groupby":"en_courseware.id"
         }
     ],

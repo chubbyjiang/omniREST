@@ -110,6 +110,18 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
+                        },
+            {
+                            "paramType":"query",
+                            "name":"size",
+                            "description":"size",
+                            "dataType":"int",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
                         }
                     ],
                     "responseMessages":[
@@ -278,6 +290,18 @@
                             "name":"description",
                             "description":"description",
                             "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
+                        },
+            {
+                            "paramType":"query",
+                            "name":"size",
+                            "description":"size",
+                            "dataType":"int",
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
@@ -482,6 +506,18 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
+                        },
+            {
+                            "paramType":"query",
+                            "name":"size",
+                            "description":"size",
+                            "dataType":"int",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
                         }
                     ],
                     "responseMessages":[
@@ -500,14 +536,50 @@
             "ruleName":"andLable",
             "wantFields":"en_file.*",
             "tables":"en_file,en_lable",
-            "relationFields":"en_file.lable = en_lable.lable_id"
+            "relationFields":"en_file.lable = en_lable.lable_id and en_lable.isdelete=0"
         },
         {
             "ruleName":"getFilefInfobyId",
             "wantFields":"en_file.*,en_lable.name as lable_name",
             "tables":"en_file",
             "join":"left join en_lable on en_file.lable = en_lable.lable_id",
-            "relationFields":"1=1"
+            "relationFields":"1=1 and en_lable.isdelete=0"
+        },
+        {
+            "ruleName":"searchCoursewareFile",
+            "wantFields":"en_file.*",
+            "tables":"en_file",
+            "relationFields":"FIND_IN_SET(en_file.id,getCoursewareChildList($parentId))"
+        },
+        {
+            "ruleName":"searchphoto",
+            "wantFields":"*",
+            "tables":"en_file",
+            "relationFields":"type = 'jpg' or type='png' or type='gif'  or type='bmp' or type='jpeg'  or type='psd' or type='eps' or type='pcx'"
+        },
+        {
+            "ruleName":"searchaudio",
+            "wantFields":"*",
+            "tables":"en_file",
+            "relationFields":"type = 'AU' or type='AIFF' or type='OGG'  or type='VQF' or type='CD'  or type='APE' or type='MP3' or type='RealAudio' or type='WMA' or type='MIDI' or type='WAV' or type = 'au' or type='aiff' or type='ogg'  or type='vqf' or type='cd'  or type='ape' or type='mp3' or type='realaudio' or type='wma' or type='midi' or type='wav'"
+        },
+        {
+            "ruleName":"searchvideo",
+            "wantFields":"*",
+            "tables":"en_file",
+            "relationFields":"type = 'mkv' or type='mp4' or type='avi'  or type='rm' or type='rmvb'  or type='3gp' or type='mov' or type='swf' or type='flv'  or type='asf'  or type='ram'   or type='wmv'   or type='mpeg'   or type='mpe'   or type='mpg'"
+        },
+        {
+            "ruleName":"searchword",
+            "wantFields":"*",
+            "tables":"en_file",
+            "relationFields":"type = 'docx' or type='doc' or type='docm' OR type='dotx' or type='dotm' or type='xlsx' or type='xlsm' or type='xltx' or type='xltm'  or type='xlsb'  or type='xlam'   or type='pptx'   or type='pptm'   or type='ppsx'   or type='ppsm'  or type='potm'   or type='ppam'   or type='ppt'  or type='xls'"
+        },
+        {
+            "ruleName":"fileAndJu",
+            "wantFields":"en_file.*",
+            "tables":"en_file,en_jurisdiction",
+            "relationFields":"en_jurisdiction.type = 0 AND en_file.file_id = en_jurisdiction.id and en_jurisdiction.isdelete=0"
         }
     ],
     "models":{

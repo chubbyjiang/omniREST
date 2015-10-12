@@ -2,7 +2,7 @@
     "pk":"pid",
     "apiVersion":"1.0.0",
     "swaggerVersion":"1.2",
-    "basePath":"/v1/english",
+    "basePath":"/v1.1/english",
     "resourcePath":"/en_paihang_backups",
     "isDefault":false,
     "apis":[
@@ -513,20 +513,20 @@
             "ruleName":"paihang_detail",
             "wantFields":"en_paihang_backups.pid,en_paihang_backups.uid,en_paihang_backups.scoring,en_paihang_backups.brisk,en_paihang_backups.city_num,en_paihang_backups.wooyou_num,en_paihang_backups.center_num,en_paihang_backups.city_id,en_paihang_backups.center_id,en_user.pet_name",
             "tables":"en_paihang_backups,en_user",
-            "relationFields":"en_paihang_backups.uid=en_user.uid"
+            "relationFields":"en_paihang_backups.uid=en_user.uid and en_user.isdelete=0"
         },
         {
             "ruleName":"paihang_city",
             "wantFields":"en_paihang_backups.*,en_user.pet_name",
             "tables":"en_paihang_backups,en_user",
-            "relationFields":"en_user.uid = en_paihang_backups.uid and city_id",
+            "relationFields":"en_user.uid = en_paihang_backups.uid and city_id and en_user.isdelete=0",
             "inner":"SELECT city_id from en_paihang_backups"
         },
         {
             "ruleName":"paihang_center",
             "wantFields":"en_paihang_backups.*,en_user.pet_name",
             "tables":"en_paihang_backups,en_user",
-            "relationFields":"en_user.uid = en_paihang_backups.uid and en_paihang_backups.center_id",
+            "relationFields":"en_user.uid = en_paihang_backups.uid and en_paihang_backups.center_id and en_user.isdelete=0",
             "inner":"SELECT center_id from en_paihang_backups"
         },
         {
@@ -540,7 +540,7 @@
             "ruleName":"paihang_center_count",
             "wantFields":"count(*)",
             "tables":"en_paihang_backups",
-            "relationFields":"en_paihang_backups.center_id",
+            "relationFields":"en_paihang_backups.center_id and en_user.isdelete=0",
             "inner":"SELECT center_id from en_paihang_backups"
         }
     ],

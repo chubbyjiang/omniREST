@@ -500,7 +500,7 @@
             "ruleName":"paihang_detail",
             "wantFields":"en_paihang.pid,en_paihang.uid,en_paihang.scoring,en_paihang.brisk,en_paihang.city_num,en_paihang.wooyou_num,en_paihang.center_num,en_paihang.city_id,en_paihang.center_id,en_user.pet_name",
             "tables":"en_paihang,en_user",
-            "relationFields":"en_paihang.uid=en_user.uid"
+            "relationFields":"en_paihang.uid=en_user.uid en_user.isdelete=0"
         }
     ],
     "models":{

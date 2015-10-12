@@ -1,0 +1,36 @@
+{
+    "apiVersion":"1.1.0",
+    "swaggerVersion":"1.2",
+    "apis":[
+        {
+            "path":"/nc_building",
+            "description":"楼栋"
+        },
+        {
+            "path":"/nc_community",
+            "description":"小区"
+        },
+        {
+            "path":"/nc_contract",
+            "description":"合同"
+        },
+        {
+            "path":"/nc_house",
+            "description":"房产"
+        },
+        {
+            "path":"/nc_owner",
+            "description":"业主"
+        }
+    ],
+    "info":{
+        "title":"resource数据在线文档",
+        "description":"为各种外围应用提供统一的数据服务",
+        "contact":"chubbyjiang@wooyou.com.cn"
+    },
+    "username":"root",
+    "password":"colour2015life",
+    "deleteFlag":"dr",
+    "jdbc":"jdbc:mysql://ice-apps.c83yzqnunvaf.rds.cn-north-1.amazonaws.com.cn:3306/resource?characterEncoding=utf8",
+    "pagerUrl":"54.223.196.153:7070"
+}

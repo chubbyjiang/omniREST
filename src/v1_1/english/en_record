@@ -476,7 +476,7 @@
             "ruleName":"record_detail",
             "wantFields":"*",
             "tables":"en_record,en_book_detail_backups",
-            "relationFields":"en_record.detail_id=en_book_detail_backups.detail_id"
+            "relationFields":"en_record.detail_id=en_book_detail_backups.detail_id and en_book_detail_backups.isdelete=0"
         }
     ],
     "models":{

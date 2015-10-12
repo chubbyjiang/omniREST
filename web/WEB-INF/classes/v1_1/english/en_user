@@ -107,7 +107,7 @@
                             "type":"",
                             "format":"",
                             "allowMultiple":false,
-                            "required":true,
+                            "required":false,
                             "minimum":0,
                             "maximum":0
                         },
@@ -156,6 +156,18 @@
                             "format":"",
                             "allowMultiple":false,
                             "required":false,
+                            "minimum":0,
+                            "maximum":0
+                         },
+            {
+                            "paramType":"query",
+                            "name":"account_id",
+                            "description":"account_id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":true,
                             "minimum":0,
                             "maximum":0
                          }
@@ -380,7 +392,19 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
-                        }
+                        },
+            {
+                            "paramType":"query",
+                            "name":"account_id",
+                            "description":"account_id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":false,
+                            "minimum":0,
+                            "maximum":0
+                         }
                     ],
                     "responseMessages":[
                         {
@@ -626,66 +650,19 @@
                             "required":false,
                             "minimum":0,
                             "maximum":0
-                        }
-                    ],
-                    "responseMessages":[
-                        {
-                            "code":200,
-                            "message":"service.model.ResultModel",
-                            "responseModel":"ResultModel"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "path":"/en_user?ruleName=1",
-            "description":"",
-            "tag":"ruleName",
-            "operations":[
-                {
-                    "httpMethod":"GET",
-                    "nickname":"根据userid获得对应address的cityid",
-                    "type":"",
-                    "ruleName":"user_cityId",
-                    "summary":"根据userid获得对应address的cityid",
-                    "parameters":[
-                        {
-                            "paramType":"query",
-                            "name":"wantFields",
-                            "description":"所需要字段列表，使用表名.字段名的方式，多个字段使用逗号隔开",
-                            "dataType":"string",
-                            "type":"",
-                            "format":"en_address.city_id",
-                            "allowMultiple":false,
-                            "required":true,
-                            "minimum":0,
-                            "maximum":0
-                        },
-                        {
-                            "paramType":"query",
-                            "name":"tables",
-                            "description":"所需要的字段来自哪些表，多个表使用逗号隔开",
-                            "dataType":"string",
-                            "type":"",
-                            "format":"en_address,en_user",
-                            "allowMultiple":false,
-                            "required":true,
-                            "minimum":0,
-                            "maximum":0
                         },
             {
                             "paramType":"query",
-                            "name":"relationFields",
-                            "description":"表和表之间的关联，使用表名.字段名=表名.字段名的格式，多个关联使用 and 连接",
+                            "name":"account_id",
+                            "description":"account_id",
                             "dataType":"string",
                             "type":"",
-                            "format":"en_user.address_id=en_address.address_id",
+                            "format":"",
                             "allowMultiple":false,
-                            "required":true,
+                            "required":false,
                             "minimum":0,
                             "maximum":0
-                        }
+                         }
                     ],
                     "responseMessages":[
                         {
@@ -696,6 +673,14 @@
                     ]
                 }
             ]
+        }
+    ],
+    "rules":[
+        {
+            "ruleName":"user_cityId",
+            "wantFields":"en_address.city_id",
+            "tables":"en_address,en_user",
+            "relationFields":"en_user.address_id=en_address.address_id and en_address.isdelete=0"
         }
     ],
     "models":{

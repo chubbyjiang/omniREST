@@ -21,7 +21,7 @@ public class Index {
     //@Produces(MediaType.TEXT_PLAIN)
     public String index() {
         //String path = "/Users/jchubby/Documents/IdeaProjects/omniREST/out/artifacts/omniREST_war_exploded/docs/v1/" + projectName;
-        String path = "/usr/ibignose/tomcat/webapps/ROOT/doc/v1/" + projectName;
+        String path = "/data2/usr/ibignose/tomcat/webapps/ROOT/doc/v1/" + projectName;
         return Util.readToString(new File(path + "/index.html"));
     }
 }

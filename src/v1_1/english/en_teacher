@@ -2,7 +2,7 @@
     "pk":"teacher_id",
     "apiVersion":"1.0.0",
     "swaggerVersion":"1.2",
-    "basePath":"/v1/english",
+    "basePath":"/v1.1/english",
     "resourcePath":"/en_teacher",
     "apis":[
         {

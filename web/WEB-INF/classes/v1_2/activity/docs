@@ -1,0 +1,22 @@
+{
+    "apiVersion":"1.0.0",
+    "swaggerVersion":"1.2",
+    "apis":[
+        {
+            "path":"/activity",
+            "description":""
+        },{
+            "path":"/member_activity_relation",
+            "description":""
+        }
+    ],
+    "info":{
+        "title":"活动发布报名API",
+        "description":"为各种活动发布报名提供服务",
+        "contact":"chubbyjiang@wooyou.com.cn"
+    },
+    "username":"root",
+    "password":"root",
+    "jdbc":"jdbc:mysql://117.29.168.34:3307/activity?characterEncoding=utf8",
+    "pagerUrl":"42.62.50.218:7070"
+}

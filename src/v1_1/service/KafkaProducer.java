@@ -5,6 +5,7 @@ import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import v1_1.service.model.ResultModel;
 
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -27,7 +28,7 @@ public class KafkaProducer {
         producer = new Producer<String, String>(new ProducerConfig(props));
     }
 
-    public void produce(String projectName, String requestUrl, String requestTable, String requestParams, String requestMethod, String sql, String remoteAddr, ResultModel result) {
+    public void produce(String projectName, String requestUrl, String requestTable, String requestParams, String requestMethod, String sql, String remoteAddr, String resultCode, String timespan) {
         String msg = String.format(
                 "{" +
                         "\"projectName\":\"%s\"" +
@@ -37,7 +38,8 @@ public class KafkaProducer {
                         ",\"requestMethod\":\"%s\"" +
                         ",\"sql\":\"%s\"" +
                         ",\"remoteAddr\":\"%s\"" +
-                        ",\"result\":%s" +
+                        ",\"resultCode\":\"%s\"" +
+                        ",\"timespan\":\"%s\"" +
                         "}"
                 , projectName
                 , requestUrl
@@ -46,7 +48,8 @@ public class KafkaProducer {
                 , requestMethod
                 , sql
                 , remoteAddr
-                , result);
+                , resultCode
+                , timespan);
         producer.send(new KeyedMessage<String, String>(TOPIC, msg));
     }
 }

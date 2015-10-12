@@ -16,7 +16,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 /**
  * Created by JChubby on 2015/7/16.
@@ -92,7 +94,7 @@ public class Service {
         HashMap<Integer, String> paramsMap = new HashMap<Integer, String>();
 
         //------------------------查读库信息---------------------------
-        sql.append("select result from tb_cache where requestUrl=? and requestTable=? and requestParams=? and requestMethod=?");
+        /*sql.append("select result from tb_cache where requestUrl=? and requestTable=? and requestParams=? and requestMethod=?");
         resultModel = cacheDb.query(sql.toString()
                 , request.getRequestURL().toString().replace("'", "\\'")
                 , tableName.replace("'", "\\'")
@@ -100,277 +102,276 @@ public class Service {
                 , request.getMethod().replace("'", "\\'"));
         //如果读库中没有数据则到后台数据库中查询
         if (resultModel == null) {
-            resultModel = new ResultModel();
-            sql = new StringBuilder();
-            //------------------------开始处理请求---------------------------
 
-            //如果存在特殊的规则，那么按照特殊规则来执行
-            if (map.containsKey("ruleName")) {
-                //获得请求参数中rules的值，是一个整数，对应配置文件中第几个rule
-                String ruleName = map.get("ruleName").get(0);
-                //获得配置文件中对应rule的详细信息
-                try {
-                    Map rules = Util.getRules(tableMap, ruleName);
-                    if (rules == null) {
-                        msg = "没有配置规则，请检查配置文件信息";
-                        isCollect = false;
-                        statusCode = StatusCode.FAILD;
-                    } else {
-                        List<String> parameters = new ArrayList<String>();
-                        //获得配置文件中（POST部分）的字段信息（对应数据库中的所有字段，不包含主键和删除标志位）
-                        ArrayList<FieldModel> fields = Util.getfields(tableMap);
-                        fields.add(new FieldModel(pk, "", true));
-                        if (deleteFlag != null) {
-                            fields.add(new FieldModel(deleteFlag, "", true));
-                        }
+        }*/
 
-                        //将rule拼合成SQL语句
-                        sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
-                        //判断是否有join连接
-                        Boolean hasJoin = false;
-                        if (rules.get("join") != null) {
-                            hasJoin = true;
-                            sql.append(" ").append(rules.get("join")).append(" where ").append(rules.get("relationFields"));
-                        } else {
-                            sql.append(" where ").append(rules.get("relationFields"));
-                        }
+        resultModel = new ResultModel();
+        sql = new StringBuilder();
+        //------------------------开始处理请求---------------------------
 
-                        //判断是否有内嵌的sql语句存在
-                        StringBuilder innerSql = new StringBuilder();
-                        Boolean hasInnerSql = false;
-                        Boolean hasWhere = false;
-                        if (rules.get("inner") != null) {
-                            hasInnerSql = true;
-                            innerSql.append(" in ").append("(").append(rules.get("inner"));
-                        }
-                        returnUrl += "rules=" + ruleName + "&";
-
-                        //如果请求的参数包含在fields中才进行处理
-                        for (FieldModel field : fields) {
-                            if (map.containsKey(field.getName())) {
-                                String key = field.getName();
-                                String value = map.get(field.getName()).get(0);
-                                String[] values = value.split(" ");
-                                //分别处理大于、小于、模糊查询、普通查询的请求
-                                if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("inner"))) {
-                                    if (values[0].equals("gt")) {
-                                        parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
-                                        returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
-                                    } else if (values[0].equals("lt")) {
-                                        parameters.add(String.format(" %s.%s<%s", tableName, key, values[1]));
-                                        returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
-                                    } else if (values[0].equals("lk")) {
-                                        //parameters.add(" " + tableName + "." + key + " like '%" + values[1].substring(1, values[1].length() - 1) + "%'");
-                                        parameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[1].substring(1, values[1].length() - 1)));
-                                        returnUrl += String.format("%s=lk+%s&", key, values[1]);
-                                    } else if (values[0].equals("inner")) {
-                                        if (hasInnerSql) {
-                                            if (!hasWhere) {
-                                                innerSql.append(" where ");
-                                                hasWhere = true;
-                                            }
-                                            innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
-                                        }
-                                    }
-                                } else {
-                                    parameters.add(String.format(" %s.%s=%s", tableName, key, value));
-                                    returnUrl += String.format("%s=%s&", key, value);
-                                }
-                            }
-                        }
-                        if (hasInnerSql) {
-                            innerSql.append(")");
-                        }
-                        sql.append(innerSql);
-                        if (parameters.size() != 0) {
-                            for (int i = 0; i < parameters.size(); i++) {
-                                sql.append(" and ");
-                                String s = parameters.get(i);
-                                sql.append(s);
-                                if (i != (parameters.size() - 1)) {
-                                    sql.append(" and ");
-                                }
-                            }
-                            if (deleteFlag != null) {
-                                sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
-                            }
-                        } else {
-                            if (deleteFlag != null) {
-                                sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
-                            }
-                        }
-                        //如果有join和groupby则拼接到末尾
-                        if (hasJoin) {
-                            if (rules.get("groupby") != null) {
-                                sql.append(" group by ").append(rules.get("groupby"));
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    msg = "配置文件读取错误:" + ex.getMessage();
+        //如果存在特殊的规则，那么按照特殊规则来执行
+        if (map.containsKey("ruleName")) {
+            //获得请求参数中rules的值，是一个整数，对应配置文件中第几个rule
+            String ruleName = map.get("ruleName").get(0);
+            //获得配置文件中对应rule的详细信息
+            try {
+                Map rules = Util.getRules(tableMap, ruleName);
+                if (rules == null) {
+                    msg = "没有配置规则，请检查配置文件信息";
                     isCollect = false;
                     statusCode = StatusCode.FAILD;
-                }
-            }
-            //请求参数中没有包含rules，则按默认的查询动作执行
-            else {
-
-                if (map.containsKey("getCount")) {
-                    sql.append(String.format("select count(*) from %s", tableName));
                 } else {
-                    sql.append(String.format("select * from %s", tableName));
-                }
-                List<String> parameters = new ArrayList<String>();
-                //获得配置文件中（POST部分）的字段信息（对应数据库中的所有字段，不包含主键和删除标志位）
-                try {
+                    List<String> parameters = new ArrayList<String>();
+                    //获得配置文件中（POST部分）的字段信息（对应数据库中的所有字段，不包含主键和删除标志位）
                     ArrayList<FieldModel> fields = Util.getfields(tableMap);
                     fields.add(new FieldModel(pk, "", true));
                     if (deleteFlag != null) {
                         fields.add(new FieldModel(deleteFlag, "", true));
                     }
+
+                    //将rule拼合成SQL语句
+                    sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables"));
+                    //判断是否有join连接
+                    Boolean hasJoin = false;
+                    if (rules.get("join") != null) {
+                        hasJoin = true;
+                        sql.append(" ").append(rules.get("join")).append(" where ").append(rules.get("relationFields"));
+                    } else {
+                        sql.append(" where ").append(rules.get("relationFields"));
+                    }
+
+                    //判断是否有内嵌的sql语句存在
+                    StringBuilder innerSql = new StringBuilder();
+                    Boolean hasInnerSql = false;
+                    Boolean hasWhere = false;
+                    if (rules.get("inner") != null) {
+                        hasInnerSql = true;
+                        innerSql.append(" in ").append("(").append(rules.get("inner"));
+                    }
+                    returnUrl += "rules=" + ruleName + "&";
+
                     //如果请求的参数包含在fields中才进行处理
                     for (FieldModel field : fields) {
                         if (map.containsKey(field.getName())) {
                             String key = field.getName();
-                            //分别处理大于、小于、模糊查询、普通查询的请求
                             String value = map.get(field.getName()).get(0);
                             String[] values = value.split(" ");
-                            if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk"))) {
+                            //分别处理大于、小于、模糊查询、普通查询的请求
+                            if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk") || values[0].contains("inner"))) {
                                 if (values[0].equals("gt")) {
-                                    parameters.add(String.format(" %s>%s", key, values[1]));
-                                    returnUrl += String.format("%s=gt+%s&", key, values[1]);
+                                    parameters.add(String.format(" %s.%s>%s", tableName, key, values[1]));
+                                    returnUrl += String.format("%s=gt+%s&", field.getName(), values[1]);
                                 } else if (values[0].equals("lt")) {
-                                    parameters.add(String.format(" %s<%s", key, values[1]));
-                                    returnUrl += String.format("%s=lt+%s&", key, values[1]);
+                                    parameters.add(String.format(" %s.%s<%s", tableName, key, values[1]));
+                                    returnUrl += String.format("%s=lt+%s&", field.getName(), values[1]);
                                 } else if (values[0].equals("lk")) {
-                                    //parameters.add(" " + key + " like '%" + values[1].substring(1,values[1].length()-1) + "%'");
-                                    parameters.add(" " + Util.getVagueSQL(key, values[1].substring(1, values[1].length() - 1)));
+                                    //parameters.add(" " + tableName + "." + key + " like '%" + values[1].substring(1, values[1].length() - 1) + "%'");
+                                    parameters.add(" " + Util.getVagueSQL(tableName + "." + key, values[1].substring(1, values[1].length() - 1)));
                                     returnUrl += String.format("%s=lk+%s&", key, values[1]);
-                                }
-                            } else {
-                                if (map.get(key).size() > 1) {
-                                    String tmpIn = "(";
-                                    for (String s : map.get(field.getName())) {
-                                        tmpIn += s + ",";
-                                        returnUrl += key + "=" + s + "&";
+                                } else if (values[0].equals("inner")) {
+                                    if (hasInnerSql) {
+                                        if (!hasWhere) {
+                                            innerSql.append(" where ");
+                                            hasWhere = true;
+                                        }
+                                        innerSql.append(String.format(" %s.%s=%s", tableName, key, values[1]));
                                     }
-                                    tmpIn = tmpIn.substring(0, tmpIn.length() - 1) + ")";
-                                    parameters.add(String.format(" %s in %s", key, tmpIn));
-                                } else {
-                                    parameters.add(String.format(" %s=%s", key, value));
-                                    returnUrl += key + "=" + value + "&";
                                 }
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    msg = "配置文件读取错误:" + ex.getMessage();
-                    isCollect = false;
-                    statusCode = StatusCode.FAILD;
-                }
-                if (parameters.size() != 0) {
-                    sql.append(" where ");
-                    for (int i = 0; i < parameters.size(); i++) {
-                        String s = parameters.get(i);
-                        sql.append(s);
-                        if (i != (parameters.size() - 1)) {
-                            sql.append(" and ");
-                        }
-                    }
-                    if (deleteFlag != null) {
-                        sql.append(String.format(" and %s=0", deleteFlag));
-                    }
-                } else {
-                    if (deleteFlag != null) {
-                        sql.append(String.format(" where %s=0", deleteFlag));
-                    }
-                }
-            }
-
-            if (isCollect) {
-                //翻页连接相关参数
-                Integer previewPage = 0;
-                Integer nextPage = 0;
-                Integer pageIndex = 1;
-                Integer pageSize = 10;
-
-                if (map.containsKey("pageIndex")) {
-                    pageIndex = Integer.parseInt(map.get("pageIndex").get(0));
-                    previewPage = pageIndex - 1;
-                    nextPage = pageIndex + 1;
-                }
-                if (map.containsKey("pageSize")) {
-                    pageSize = Integer.parseInt(map.get("pageSize").get(0));
-                }
-
-                if (map.containsKey("orderby")) {
-                    sql.append(" order by ").append(map.get("orderby").get(0));
-                }
-                if (map.containsKey("isdesc")) {
-                    if (map.get("isdesc").get(0).equals("1")) {
-                        sql.append(" desc");
-                    } else {
-                        sql.append(" asc");
-                    }
-                }
-                //如果请求参数中带有pageIndex则执行分页操作
-                try {
-                    if (map.containsKey("pageIndex")) {
-                        //判断是否存在上下页
-                        String nextSql = sql.toString() + " limit " + (((pageIndex - 1) * pageSize) + 1) + "," + pageSize;
-                        ResultSet rs = jdbcHelper.executeResultSet(nextSql);
-                        //rs = stmt.executeQuery(nextSql);
-                        rs.last();
-                        if (rs.getRow() > 0) {
-                            resultModel.setNextPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
-                        }
-                        if (previewPage > 0) {
-                            resultModel.setPreviewPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
-                        }
-                        sql.append(" limit ").append((pageIndex - 1) * pageSize).append(",").append(pageSize);
-                    }
-                    //connect();
-                    //执行SQL语句进行查询
-                    //rs = stmt.executeQuery(sql.toString());
-                    ResultSet rs = jdbcHelper.executeResultSet(sql.toString());
-                    ResultSetMetaData md = rs.getMetaData();
-                    int columnCount = md.getColumnCount();
-                    //将得到的结果存入返回的实体类型中
-                    while (rs.next()) {
-                        MapModel databaseResults = new MapModel();
-                        for (int i = 1; i < columnCount + 1; i++) {
-                            if (md.getColumnName(i).equals("count(*)")) {
-                                databaseResults.getResult().put("countNumber", rs.getString(i));
-
                             } else {
-                                if (rs.getString(i) == null) {
-                                    databaseResults.getResult().put(md.getColumnName(i), "");
-                                } else {
-                                    databaseResults.getResult().put(md.getColumnName(i), rs.getString(i));
-                                }
+                                parameters.add(String.format(" %s.%s=%s", tableName, key, value));
+                                returnUrl += String.format("%s=%s&", key, value);
                             }
                         }
-                        resultModel.getContent().add(databaseResults);
                     }
-                    msg = "success";
-                    statusCode = StatusCode.SUCCESS;
-                    rs.last();
-                    if (rs.getRow() < 1) {
-                        statusCode = StatusCode.FAILD;
-                        msg = "no result";
+                    if (hasInnerSql) {
+                        innerSql.append(")");
                     }
-                } catch (Exception ex) {
-                    statusCode = StatusCode.FAILD;
-                    msg = "exec query error : " + ex.getMessage();
-                } finally {
-                    jdbcHelper.close();
+                    sql.append(innerSql);
+                    if (parameters.size() != 0) {
+                        for (int i = 0; i < parameters.size(); i++) {
+                            sql.append(" and ");
+                            String s = parameters.get(i);
+                            sql.append(s);
+                            if (i != (parameters.size() - 1)) {
+                                sql.append(" and ");
+                            }
+                        }
+                        if (deleteFlag != null) {
+                            sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
+                        }
+                    } else {
+                        if (deleteFlag != null) {
+                            sql.append(String.format(" and %s.%s=0", tableName, deleteFlag));
+                        }
+                    }
+                    //如果有join和groupby则拼接到末尾
+                    if (hasJoin) {
+                        if (rules.get("groupby") != null) {
+                            sql.append(" group by ").append(rules.get("groupby"));
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                msg = "配置文件读取错误:" + ex.getMessage();
+                isCollect = false;
+                statusCode = StatusCode.FAILD;
+            }
+        }
+        //请求参数中没有包含rules，则按默认的查询动作执行
+        else {
+
+            if (map.containsKey("getCount")) {
+                sql.append(String.format("select count(*) from %s", tableName));
+            } else {
+                sql.append(String.format("select * from %s", tableName));
+            }
+            List<String> parameters = new ArrayList<String>();
+            //获得配置文件中（POST部分）的字段信息（对应数据库中的所有字段，不包含主键和删除标志位）
+            try {
+                ArrayList<FieldModel> fields = Util.getfields(tableMap);
+                fields.add(new FieldModel(pk, "", true));
+                if (deleteFlag != null) {
+                    fields.add(new FieldModel(deleteFlag, "", true));
+                }
+                //如果请求的参数包含在fields中才进行处理
+                for (FieldModel field : fields) {
+                    if (map.containsKey(field.getName())) {
+                        String key = field.getName();
+                        //分别处理大于、小于、模糊查询、普通查询的请求
+                        String value = map.get(field.getName()).get(0);
+                        String[] values = value.split(" ");
+                        if (values.length > 1 && (values[0].contains("gt") || values[0].contains("lt") || values[0].contains("lk"))) {
+                            if (values[0].equals("gt")) {
+                                parameters.add(String.format(" %s>%s", key, values[1]));
+                                returnUrl += String.format("%s=gt+%s&", key, values[1]);
+                            } else if (values[0].equals("lt")) {
+                                parameters.add(String.format(" %s<%s", key, values[1]));
+                                returnUrl += String.format("%s=lt+%s&", key, values[1]);
+                            } else if (values[0].equals("lk")) {
+                                //parameters.add(" " + key + " like '%" + values[1].substring(1,values[1].length()-1) + "%'");
+                                parameters.add(" " + Util.getVagueSQL(key, values[1].substring(1, values[1].length() - 1)));
+                                returnUrl += String.format("%s=lk+%s&", key, values[1]);
+                            }
+                        } else {
+                            if (map.get(key).size() > 1) {
+                                String tmpIn = "(";
+                                for (String s : map.get(field.getName())) {
+                                    tmpIn += s + ",";
+                                    returnUrl += key + "=" + s + "&";
+                                }
+                                tmpIn = tmpIn.substring(0, tmpIn.length() - 1) + ")";
+                                parameters.add(String.format(" %s in %s", key, tmpIn));
+                            } else {
+                                parameters.add(String.format(" %s=%s", key, value));
+                                returnUrl += key + "=" + value + "&";
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                msg = "配置文件读取错误:" + ex.getMessage();
+                isCollect = false;
+                statusCode = StatusCode.FAILD;
+            }
+            if (parameters.size() != 0) {
+                sql.append(" where ");
+                for (int i = 0; i < parameters.size(); i++) {
+                    String s = parameters.get(i);
+                    sql.append(s);
+                    if (i != (parameters.size() - 1)) {
+                        sql.append(" and ");
+                    }
+                }
+                if (deleteFlag != null) {
+                    sql.append(String.format(" and %s=0", deleteFlag));
+                }
+            } else {
+                if (deleteFlag != null) {
+                    sql.append(String.format(" where %s=0", deleteFlag));
                 }
             }
-            jdbcHelper.close();
-            resultModel.setMessage(msg);
-            resultModel.setCode(statusCode.toString());
         }
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel);
+
+        if (isCollect) {
+            //翻页连接相关参数
+            Integer previewPage = 0;
+            Integer nextPage = 0;
+            Integer pageIndex = 1;
+            Integer pageSize = 10;
+
+            if (map.containsKey("pageIndex")) {
+                pageIndex = Integer.parseInt(map.get("pageIndex").get(0));
+                previewPage = pageIndex - 1;
+                nextPage = pageIndex + 1;
+            }
+            if (map.containsKey("pageSize")) {
+                pageSize = Integer.parseInt(map.get("pageSize").get(0));
+            }
+
+            if (map.containsKey("orderby")) {
+                sql.append(" order by ").append(map.get("orderby").get(0));
+            }
+            if (map.containsKey("isdesc")) {
+                if (map.get("isdesc").get(0).equals("1")) {
+                    sql.append(" desc");
+                } else {
+                    sql.append(" asc");
+                }
+            }
+            //如果请求参数中带有pageIndex则执行分页操作
+            try {
+                if (map.containsKey("pageIndex")) {
+                    //判断是否存在上下页
+                    String nextSql = sql.toString() + " limit " + (((pageIndex - 1) * pageSize) + 1) + "," + pageSize;
+                    ResultSet rs = jdbcHelper.executeResultSet(nextSql);
+                    rs.last();
+                    if (rs.getRow() > 0) {
+                        resultModel.setNextPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + nextPage + "&pageSize=" + pageSize));
+                    }
+                    if (previewPage > 0) {
+                        resultModel.setPreviewPage(String.format("%s/v1/%s?%s", pagerUrl, tableName, returnUrl + "pageIndex=" + previewPage + "&pageSize=" + pageSize));
+                    }
+                    sql.append(" limit ").append((pageIndex - 1) * pageSize).append(",").append(pageSize);
+                }
+                //执行SQL语句进行查询
+                ResultSet rs = jdbcHelper.executeResultSet(sql.toString());
+                ResultSetMetaData md = rs.getMetaData();
+                int columnCount = md.getColumnCount();
+                //将得到的结果存入返回的实体类型中
+                while (rs.next()) {
+                    MapModel databaseResults = new MapModel();
+                    for (int i = 1; i < columnCount + 1; i++) {
+                        if (md.getColumnName(i).equals("count(*)")) {
+                            databaseResults.getResult().put("countNumber", rs.getString(i));
+
+                        } else {
+                            if (rs.getString(i) == null) {
+                                databaseResults.getResult().put(md.getColumnName(i), "");
+                            } else {
+                                databaseResults.getResult().put(md.getColumnName(i), rs.getString(i));
+                            }
+                        }
+                    }
+                    resultModel.getContent().add(databaseResults);
+                }
+                msg = "success";
+                statusCode = StatusCode.SUCCESS;
+                rs.last();
+                if (rs.getRow() < 1) {
+                    statusCode = StatusCode.FAILD;
+                    msg = "no result";
+                }
+            } catch (Exception ex) {
+                statusCode = StatusCode.FAILD;
+                msg = "exec query error : " + ex.getMessage();
+            } finally {
+                jdbcHelper.close();
+            }
+        }
+        jdbcHelper.close();
+        resultModel.setMessage(msg);
+        resultModel.setCode(statusCode.toString());
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel.getCode(),getTimespan());
         return resultModel;
     }
 
@@ -401,7 +402,7 @@ public class Service {
         StringBuilder sql = new StringBuilder();
 
         //------------------------查读库信息---------------------------
-        sql.append("select result from tb_cache where requestUrl=? and requestTable=? and requestParams=? and requestMethod=?");
+        /*sql.append("select result from tb_cache where requestUrl=? and requestTable=? and requestParams=? and requestMethod=?");
         resultModel = cacheDb.query(sql.toString()
                 , request.getRequestURL().toString().replace("'", "\\'")
                 , tableName.replace("'", "\\'")
@@ -409,73 +410,75 @@ public class Service {
                 , request.getMethod().replace("'", "\\'"));
         //如果读库中没有数据则到后台数据库中查询
         if (resultModel == null) {
-            sql = new StringBuilder();
-            resultModel = new ResultModel();
-            //如果存在特殊的规则，那么按照特殊规则来执行
-            if (map.containsKey("ruleName")) {
-                //获得请求参数中rules的值，是一个整数，对应配置文件中第几个rule
-                String ruleName = map.get("ruleName").get(0);
-                try {
-                    //获得配置文件中对应rule的详细信息
-                    Map rules = Util.getRules(tableMap, ruleName);
-                    if (rules == null) {
-                        isCollect = false;
-                        msg = "没有找到规则，请检查配置文件";
-                        statusCode = StatusCode.FAILD;
-                    } else {
-                        //将rule拼合成SQL语句
-                        sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables")).append(" where ").append(rules.get("relationFields"));
-                        sql.append(String.format(" and %s=%s", pk, pkey));
-                    }
-                } catch (Exception ex) {
+
+        }*/
+
+        sql = new StringBuilder();
+        resultModel = new ResultModel();
+        //如果存在特殊的规则，那么按照特殊规则来执行
+        if (map.containsKey("ruleName")) {
+            //获得请求参数中rules的值，是一个整数，对应配置文件中第几个rule
+            String ruleName = map.get("ruleName").get(0);
+            try {
+                //获得配置文件中对应rule的详细信息
+                Map rules = Util.getRules(tableMap, ruleName);
+                if (rules == null) {
                     isCollect = false;
-                    msg = "配置文件读取错误:" + ex.getMessage();
+                    msg = "没有找到规则，请检查配置文件";
                     statusCode = StatusCode.FAILD;
-                }
-            }
-            //执行正常查询的操作
-            else {
-                if (deleteFlag != null) {
-                    sql.append(String.format("select * from %s where %s=0 and %s=%s", tableName, deleteFlag, pk, pkey));
                 } else {
-                    sql.append(String.format("select * from %s where %s=%s", tableName, pk, pkey));
+                    //将rule拼合成SQL语句
+                    sql.append("select ").append(rules.get("wantFields")).append(" from ").append(rules.get("tables")).append(" where ").append(rules.get("relationFields"));
+                    sql.append(String.format(" and %s=%s", pk, pkey));
                 }
+            } catch (Exception ex) {
+                isCollect = false;
+                msg = "配置文件读取错误:" + ex.getMessage();
+                statusCode = StatusCode.FAILD;
             }
-            if (isCollect) {
-                try {
-                    ResultSet rs = jdbcHelper.executeResultSet(sql.toString());
-                    //rs = stmt.executeQuery(sql.toString());
-                    ResultSetMetaData md = rs.getMetaData();
-                    int columnCount = md.getColumnCount();
-                    while (rs.next()) {
-                        MapModel databaseResults = new MapModel();
-                        for (int i = 1; i < columnCount + 1; i++) {
-                            if (rs.getString(i) == null) {
-                                databaseResults.getResult().put(md.getColumnName(i), "");
-                            } else {
-                                databaseResults.getResult().put(md.getColumnName(i), rs.getString(i));
-                            }
-                        }
-                        resultModel.getContent().add(databaseResults);
-                    }
-                    resultModel.setMessage("success");
-                    rs.last();
-                    if (rs.getRow() < 1) {
-                        statusCode = StatusCode.FAILD;
-                        msg = "no result";
-                    }
-                } catch (Exception ex) {
-                    statusCode = StatusCode.FAILD;
-                    msg = "exec query error :" + ex.getMessage();
-                } finally {
-                    jdbcHelper.close();
-                }
-            }
-            jdbcHelper.close();
-            resultModel.setMessage(msg);
-            resultModel.setCode(statusCode.toString());
         }
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel);
+        //执行正常查询的操作
+        else {
+            if (deleteFlag != null) {
+                sql.append(String.format("select * from %s where %s=0 and %s=%s", tableName, deleteFlag, pk, pkey));
+            } else {
+                sql.append(String.format("select * from %s where %s=%s", tableName, pk, pkey));
+            }
+        }
+        if (isCollect) {
+            try {
+                ResultSet rs = jdbcHelper.executeResultSet(sql.toString());
+                //rs = stmt.executeQuery(sql.toString());
+                ResultSetMetaData md = rs.getMetaData();
+                int columnCount = md.getColumnCount();
+                while (rs.next()) {
+                    MapModel databaseResults = new MapModel();
+                    for (int i = 1; i < columnCount + 1; i++) {
+                        if (rs.getString(i) == null) {
+                            databaseResults.getResult().put(md.getColumnName(i), "");
+                        } else {
+                            databaseResults.getResult().put(md.getColumnName(i), rs.getString(i));
+                        }
+                    }
+                    resultModel.getContent().add(databaseResults);
+                }
+                resultModel.setMessage("success");
+                rs.last();
+                if (rs.getRow() < 1) {
+                    statusCode = StatusCode.FAILD;
+                    msg = "no result";
+                }
+            } catch (Exception ex) {
+                statusCode = StatusCode.FAILD;
+                msg = "exec query error :" + ex.getMessage();
+            } finally {
+                jdbcHelper.close();
+            }
+        }
+        jdbcHelper.close();
+        resultModel.setMessage(msg);
+        resultModel.setCode(statusCode.toString());
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel.getCode(),getTimespan());
         return resultModel;
     }
 
@@ -502,15 +505,19 @@ public class Service {
         } else {
             sql.append(String.format("update %s set %s=1 where %s=%s", tableName, deleteFlag, pk, pkey));
         }
-        jdbcHelper.executeUpdate(sql.toString());
-        //stmt.executeUpdate(sql.toString());
-        msg = "success";
-        statusCode = StatusCode.SUCCESS;
+        int res = jdbcHelper.executeUpdate(sql.toString());
+        if (res > 0) {
+            msg = "success";
+            statusCode = StatusCode.SUCCESS;
+        } else {
+            msg = "没有此记录！";
+            statusCode = StatusCode.FAILD;
+        }
         jdbcHelper.close();
         resultModel.setMessage(msg);
         resultModel.setContent(null);
         resultModel.setCode(statusCode.toString());
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, "", request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel);
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, "", request.getMethod(), sql.toString(), request.getRemoteAddr(), resultModel.getCode(), getTimespan());
         return resultModel;
     }
 
@@ -635,7 +642,7 @@ public class Service {
         jdbcHelper.close();
         resultModel.setMessage(msg);
         resultModel.setCode(statusCode.toString());
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel);
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel.getCode(), getTimespan());
         return resultModel;
     }
 
@@ -750,7 +757,7 @@ public class Service {
         jdbcHelper.close();
         resultModel.setMessage(msg);
         resultModel.setCode(statusCode.toString());
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel);
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel.getCode(), getTimespan());
         return resultModel;
     }
 
@@ -812,7 +819,7 @@ public class Service {
         resultModel.setMessage(msg);
         resultModel.setCode(statusCode.toString());
         resultModel.setContent(null);
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel);
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel.getCode(), getTimespan());
         return resultModel;
     }
 
@@ -866,7 +873,7 @@ public class Service {
         resultModel.setMessage(msg);
         resultModel.setCode(statusCode.toString());
         resultModel.setContent(null);
-        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel);
+        kafkaProducer.produce(projectName, request.getRequestURI(), tableName, map.toString(), request.getMethod(), kafkaSql, request.getRemoteAddr(), resultModel.getCode(), getTimespan());
         return resultModel;
     }
 
@@ -894,5 +901,11 @@ public class Service {
         }
         lastProject = projectName;
         jdbcHelper = new JDBCHelper(jdbc, username, password);
+    }
+
+    private String getTimespan() {
+        Date nowTime = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyyMMddhhmmss");
+        return sdFormatter.format(nowTime);
     }
 }
