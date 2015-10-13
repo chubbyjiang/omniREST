@@ -17,6 +17,18 @@
                     "type":"",
                     "summary":"添加corp",
                     "parameters":[
+			{
+                            "paramType":"query",
+                            "name":"id",
+                            "description":"id",
+                            "dataType":"string",
+                            "type":"",
+                            "format":"",
+                            "allowMultiple":false,
+                            "required":true,
+                            "minimum":0,
+                            "maximum":0
+                        },
                         {
                             "paramType":"query",
                             "name":"name",

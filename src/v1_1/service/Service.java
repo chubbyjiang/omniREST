@@ -901,9 +901,9 @@ public class Service {
             isDefault = false;
         }
         //没有默认值的话插入时应带上主键信息
-        if (!isDefault) {
+/*        if (!isDefault) {
             fs.add(new FieldModel(pk, "", true));
-        }
+        }*/
         Map<String, Object> map;
         try {
             map = Util.parseJSON2Map(jsonStr);
